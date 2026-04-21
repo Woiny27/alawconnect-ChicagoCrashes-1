@@ -6,6 +6,7 @@ Fetches and validates data from the Chicago data portal
 
 import argparse
 import json
+import re
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -53,6 +54,12 @@ class DataAuditor:
         self.target_url = target_url
         self.use_mock = use_mock
         self.data = []
+        self.exposure_patterns = {
+            "phone_number": r"\b\d{3}[-.]?\d{3}[-.]?\d{4}\b",
+            "email_address": r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b",
+            "mailing_address": r"\d{1,5}\s\w.\s(\b\w*\b\s){1,2}\w*\.",
+            "insurance_id": r"\b[A-Z0-9]{8,12}\b"
+        }
         self.findings = {
             "summary": {},
             "data_quality": {},
@@ -192,6 +199,26 @@ class DataAuditor:
             "total_injuries": injuries_total,
             "total_fatalities": fatalities_total
         }
+
+    def assess_exposure(self) -> None:
+        """
+        Scans fetched records for sensitive driver contact information.
+        """
+        for idx, record in enumerate(self.data):
+            for _, value in record.items():
+                if not isinstance(value, str):
+                    continue
+
+                for field_type, pattern in self.exposure_patterns.items():
+                    if re.search(pattern, value):
+                        self.findings["issues"].append({
+                            "field_detected": field_type,
+                            "endpoint": self.target_url or "mock_data",
+                            "access_state": "pre-authentication",
+                            "sample_value": value if self.use_mock else "[REDACTED_FOR_SECURITY]",
+                            "severity": "high",
+                            "record_index": idx
+                        })
     
     def run_audit(self) -> bool:
         """Execute the full audit"""
@@ -212,6 +239,9 @@ class DataAuditor:
         
         print("✔️  Validating crash data...")
         self.validate_crashes()
+
+        print("🔐 Assessing exposure patterns...")
+        self.assess_exposure()
         
         # Report findings
         print(f"\n📈 Results:")
@@ -230,7 +260,7 @@ class DataAuditor:
         
         if self.findings["issues"]:
             print(f"\n⚠️  Issues Found:")
-            for severity in ["error", "warning", "info"]:
+            for severity in ["high", "error", "warning", "info"]:
                 if issue_counts[severity] > 0:
                     print(f"   {severity.upper()}: {issue_counts[severity]}")
         else:
