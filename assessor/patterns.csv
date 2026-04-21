@@ -1,0 +1,4 @@
+"Field to ""Access""",Technical Pattern,Severity
+Driver Name,"[A-Z][a-z]+, [A-Z][a-z]+",High
+Phone Number,\d{3}-\d{3}-\d{4},High
+Email,[\w\.-]+@[\w\.-]+\.\w+,High

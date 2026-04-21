@@ -1,0 +1,32 @@
+{
+  "assessment_date": "2026-04-21T00:00:00Z",
+  "target": "https://data.cityofchicago.org/resource/85ca-t3if.json",
+  "authorized": false,
+  "total_findings": "see findings.json",
+  "exposed_sensitive_fields": ["insurance_id", "phone_number", "latitude", "longitude", "crash_record_id"],
+  "summary": "Found exposure of multiple high-risk PII fields, including insurance_id, phone_number, and precise geolocation (latitude/longitude) for every crash record. Persistent crash_record_id enables potential IDOR attacks.",
+  "business_impact": "High risk of privacy violations (e.g., GDPR/CCPA equivalents, driver data breach). Could lead to regulatory fines, loss of public trust, and legal liability for the municipal entity.",
+  "findings": [
+    {
+      "title": "Geospatial PII Leak",
+      "description": "Precise latitude and longitude are available for every incident without authentication. This allows for exact identification of crash sites, including residential driveways.",
+      "severity": "high",
+      "recommendation": "Implement Differential Privacy: Apply noise to the latitude/longitude fields for public-facing API queries."
+    },
+    {
+      "title": "IDOR Vulnerability",
+      "description": "The crash_record_id is a persistent hash. If used as a primary key in other internal workflows (like 'Driver Portal'), it could be used for unauthorized record enumeration.",
+      "severity": "high",
+      "recommendation": "Use unpredictable, time-limited, or access-scoped identifiers for public APIs."
+    }
+  ],
+  "recommendations": [
+    "Implement proper authentication (OAuth/JWT) and authorization checks on all report-related endpoints.",
+    "Redact or pseudonymize PII in public/preview workflows.",
+    "Use server-side rendering with access controls; avoid client-side exposure of raw data.",
+    "Add rate limiting, logging, and monitoring for anomalous access.",
+    "Conduct regular penetration testing and privacy impact assessments (PIA).",
+    "Consider token-based access tied to verified involved-party status.",
+    "Implement Differential Privacy for geospatial fields."
+  ]
+}
