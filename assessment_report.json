@@ -19,7 +19,14 @@
       "severity": "high",
       "recommendation": "Use unpredictable, time-limited, or access-scoped identifiers for public APIs."
     }
-  ],
+    ,
+      {
+        "title": "IDOR Risk: Bulk Data Harvesting",
+        "description": "While Record IDs are hashed, the lack of session-based authorization on the query endpoints allows for uninhibited bulk data harvesting.",
+        "severity": "high",
+        "recommendation": "Enforce session-based authorization and limit bulk data access to authenticated and authorized users only."
+      }
+    ],
   "recommendations": [
     "Implement proper authentication (OAuth/JWT) and authorization checks on all report-related endpoints.",
     "Redact or pseudonymize PII in public/preview workflows.",
